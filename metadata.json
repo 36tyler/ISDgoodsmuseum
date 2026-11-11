@@ -1,0 +1,6 @@
+{
+  "name": "📝이세돌 공주 구출 노트",
+  "description": "이세계아이돌(ISEGYE IDOL) 공식 및 팬 굿즈, 앨범, 콘서트 기념품을 체계적으로 기록하고 감상하는 고품격 아카이빙 도감",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

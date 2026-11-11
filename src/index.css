@@ -1,0 +1,140 @@
+@import "tailwindcss";
+
+@theme {
+  --color-slate-750: #293548;
+  --color-slate-850: #172033;
+}
+
+@variant dark (&:where(.dark, .dark *));
+
+@font-face {
+  font-family: 'GmarketSans';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansMedium.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'KOTRAHOPE';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2110@1.0/KOTRAHOPE.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  body {
+    font-family: var(--site-font, 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif);
+  }
+}
+
+/* Custom aesthetic scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.6);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.45);
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.6);
+}
+
+/* Rubber Stamp Cute Squish '꾸우우욱' Impact Animation */
+@keyframes stampSlam {
+  0% {
+    opacity: 0;
+    transform: scale(2.8) rotate(-32deg);
+  }
+  45% {
+    opacity: 0.95;
+    transform: scale(0.86, 0.76) rotate(-10deg); /* Squishy rubber compression */
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.12, 1.08) rotate(-15deg); /* Elastic bounce back */
+  }
+  85% {
+    transform: scale(0.96, 0.98) rotate(-11deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(-12deg);
+  }
+}
+
+.animate-stamp-slam {
+  animation: stampSlam 0.38s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes inkPulse {
+  0% {
+    transform: scale(0.7);
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+.animate-ink-pulse {
+  animation: inkPulse 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes secretHeartFloat {
+  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+  15% { opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--heart-drift)), calc(-50% - var(--heart-rise))) scale(0.85); opacity: 0; }
+}
+.secret-heart-particle {
+  animation: secretHeartFloat 1s ease-out forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .secret-heart-particle { --heart-drift: 0px !important; --heart-rise: 10px !important; }
+}
+
+/* Keep the requested labels black even when stored text contains color tags. */
+.requested-black-text,
+.requested-black-text * {
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+}
+
+:root {
+  color-scheme: light;
+  --readable-text: #111827;
+}
+:root.dark {
+  color-scheme: dark;
+  --readable-text: #f1f5f9;
+}
+.theme-readable-text,
+.theme-readable-text * {
+  color: var(--readable-text) !important;
+  -webkit-text-fill-color: var(--readable-text) !important;
+}
+body {
+  background-color: #f8fafc;
+  color: #111827;
+}
+.dark body {
+  background-color: #0f172a;
+  color: #f1f5f9;
+}
+input, textarea, select { color-scheme: inherit; }
+
+:root { --member-ink-mix: black; --member-ink-amount: 35%; }
+:root.dark { --member-ink-mix: white; --member-ink-amount: 45%; }
