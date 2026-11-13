@@ -36,7 +36,7 @@ import {
   FileUp,
   BookOpen
 } from 'lucide-react';
-import { GoodsItem, SiteConfig, MemberId, CategoryItem, Rarity, User, SiteTexts } from '../types';
+import { GoodsItem, SiteConfig, MemberId, CategoryItem, Rarity, User, SiteTexts, NewsItem } from '../types';
 import { MEMBERS, getRarityLabel } from '../data/members';
 import { DEFAULT_SITE_TEXTS, DEFAULT_SITE_CONFIG } from '../data/initialGoods';
 import { GRADIENT_PRESETS, DEFAULT_CUSTOM_GRADIENT, getGradientCss } from '../utils/gradientUtils';
@@ -50,13 +50,14 @@ interface AdminModalProps {
   onDeleteGoods: (id: string) => void;
   onResetToDefault: () => void;
   categories: CategoryItem[];
+  news?: NewsItem[];
   onAddCategory: (cat: CategoryItem) => void;
   onUpdateCategory: (cat: CategoryItem) => void;
   onDeleteCategory: (id: string) => void;
   onResetCategories: () => void;
   config: SiteConfig;
   onUpdateConfig: (newConfig: Partial<SiteConfig>) => void;
-  onImportData: (data: { goods: GoodsItem[]; config: SiteConfig; categories?: CategoryItem[] }) => void;
+  onImportData: (data: { goods: GoodsItem[]; config: SiteConfig; categories?: CategoryItem[]; news?: NewsItem[] }) => void;
   onShowToast: (text: string, type?: 'success' | 'info' | 'heart' | 'bookmark') => void;
   currentUser: User | null;
   onOpenLogin: (defaultAdminTab?: boolean) => void;
@@ -75,6 +76,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   onDeleteGoods,
   onResetToDefault,
   categories,
+  news = [],
   onAddCategory,
   onUpdateCategory,
   onDeleteCategory,
@@ -568,10 +570,11 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   // Export JSON
   const handleExportJSON = () => {
     const backupData = {
-      version: '2.5',
+      version: '3.0-shared',
       exportDate: new Date().toISOString(),
       config,
       categories,
+      news,
       goods,
     };
     const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
@@ -598,6 +601,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
             goods: parsed.goods,
             config: parsed.config || config,
             categories: parsed.categories || categories,
+            news: Array.isArray(parsed.news) ? parsed.news : news,
           });
           onShowToast(`총 ${parsed.goods.length}개의 굿즈 데이터를 성공적으로 복원했습니다.`, 'success');
         } else {

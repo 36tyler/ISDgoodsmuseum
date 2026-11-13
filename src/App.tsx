@@ -1,3 +1,6 @@
+import { useArchiveData } from './hooks/useArchiveData';
+import { ArchiveSyncStatus } from './components/ArchiveSyncStatus';
+import { publicGoods } from '../shared/catalog.js';
 import { getGoodsKinds } from './utils/goodsKinds';
 import { GoodsCalculatorModal } from './components/GoodsCalculatorModal';
 import { BookIntro, BOOK_INTRO_SEEN_KEY } from './components/BookIntro';
@@ -104,116 +107,13 @@ export default function App() {
       }
     };
     void refreshAdminSession();
-    const timer = window.setInterval(refreshAdminSession, 60000);
+    const timer = currentUser?.role === 'admin' ? window.setInterval(refreshAdminSession, 60000) : undefined;
     window.addEventListener('focus', refreshAdminSession);
     return () => { cancelled = true; clearInterval(timer); window.removeEventListener('focus', refreshAdminSession); };
-  }, []);
+  }, [currentUser?.role]);
 
-  // 3. Dynamic Categories State
-  const [categories, setCategories] = useState<CategoryItem[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_CATEGORIES);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (e) {
-      console.error('Failed to load categories', e);
-    }
-    return DEFAULT_CATEGORIES;
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY_CATEGORIES, JSON.stringify(categories));
-    } catch (e) {
-      console.error(e);
-    }
-  }, [categories]);
-
-  // 3.5. News (새로운 소식) State with LocalStorage
-  const [news, setNews] = useState<NewsItem[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_NEWS);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (e) {
-      console.error('Failed to load news from localStorage', e);
-    }
-    return INITIAL_NEWS;
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY_NEWS, JSON.stringify(news));
-    } catch (e) {
-      console.error(e);
-    }
-  }, [news]);
-
-  // 4. Goods State with LocalStorage
-  const [goods, setGoods] = useState<GoodsItem[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_GOODS);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.map((item: GoodsItem) => {
-            return {
-              ...normalizeGoods(item),
-              title: item.title ? item.title.replace(/주폭소년단/g, '주폭도') : item.title,
-              description: item.description ? item.description.replace(/주폭소년단/g, '주폭도') : item.description,
-              components: Array.isArray(item.components)
-                ? item.components.map((c) => c.replace(/주폭소년단/g, '주폭도'))
-                : item.components,
-              tags: Array.isArray(item.tags)
-                ? item.tags.map((t) => (t === '주폭소년단' ? '주폭도' : t))
-                : item.tags,
-            };
-          });
-        }
-      }
-    } catch (e) {
-      console.error('Failed to load goods from localStorage', e);
-    }
-    return INITIAL_GOODS.map(normalizeGoods);
-  });
-
-  // 5. Site Config State with LocalStorage
-  const [config, setConfig] = useState<SiteConfig>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_CONFIG);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.siteTitle?.includes('공주 구출 노트') || !parsed.siteTitle) {
-          parsed.siteTitle = DEFAULT_SITE_CONFIG.siteTitle;
-        }
-        if (parsed.siteSubtitle?.includes('RESCUE') || !parsed.siteSubtitle) {
-          parsed.siteSubtitle = DEFAULT_SITE_CONFIG.siteSubtitle;
-        }
-        if (parsed.heroHeadline?.includes('구출 노트')) {
-          parsed.heroHeadline = DEFAULT_SITE_CONFIG.heroHeadline;
-        }
-        return {
-          ...DEFAULT_SITE_CONFIG,
-          ...parsed,
-          siteTexts: {
-            ...DEFAULT_SITE_CONFIG.siteTexts,
-            ...(parsed.siteTexts || {}),
-          },
-          customGradient: {
-            ...DEFAULT_CUSTOM_GRADIENT,
-            ...(parsed.customGradient || {}),
-          },
-        };
-      }
-    } catch (e) {
-      console.error('Failed to load config from localStorage', e);
-    }
-    return DEFAULT_SITE_CONFIG;
-  });
+  const archive = useArchiveData(currentUser?.role === 'admin');
+  const {goods,setGoods,config,setConfig,categories,setCategories,news,setNews} = archive;
 
   // 6. Favorites Set State
   const [favorites, setFavorites] = useState<string[]>(() => {
@@ -223,7 +123,7 @@ export default function App() {
     } catch (e) {
       console.error(e);
     }
-    return ['goods-001', 'goods-002'];
+    return [];
   });
 
   // 7. Navigation & Filter States
@@ -247,7 +147,7 @@ export default function App() {
   const [loginDefaultAdminTab, setLoginDefaultAdminTab] = useState(false);
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
-  const isAdmin = currentUser?.role === 'admin';
+  const isAdmin = currentUser?.role === 'admin' && archive.state.ready;
 
   useEffect(() => {
     if (!isAdmin) setIsCustomizerOpen(false);
@@ -258,6 +158,7 @@ export default function App() {
   };
 
   const handleAdminEditGoods = (item: GoodsItem) => {
+    if (!archive.state.ready) { showToast('공용 저장소 연결을 확인한 뒤 수정해주세요.', 'info'); return; }
     setAdminEditingGoods(item);
     setAdminInitialTab('crud');
     setIsAdminOpen(true);
@@ -277,23 +178,6 @@ export default function App() {
   const dismissToast = (id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
-
-  // Sync to local storage
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY_GOODS, JSON.stringify(goods));
-    } catch (e) {
-      console.error(e);
-    }
-  }, [goods]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(config));
-    } catch (e) {
-      console.error(e);
-    }
-  }, [config]);
 
   useEffect(() => {
     try {
@@ -368,7 +252,7 @@ export default function App() {
   };
 
   const handleOpenCategoryManager = () => {
-    if (currentUser?.role === 'admin') {
+    if (isAdmin) {
       setAdminInitialTab('categories');
       setIsAdminOpen(true);
     } else {
@@ -378,6 +262,7 @@ export default function App() {
 
   // Tag Handlers
   const handleUpdateTags = (goodsId: string, updatedTags: string[]) => {
+    if (!isAdmin) return;
     setGoods((prev) =>
       prev.map((item) => (item.id === goodsId ? { ...item, tags: updatedTags } : item))
     );
@@ -483,18 +368,19 @@ export default function App() {
   };
 
   const handleResetToDefault = () => {
-    setGoods(INITIAL_GOODS.map(normalizeGoods));
+    setGoods(INITIAL_GOODS.map(item => publicGoods(item) as GoodsItem));
     setCategories(DEFAULT_CATEGORIES);
     setConfig(DEFAULT_SITE_CONFIG);
   };
 
-  const handleImportData = (data: { goods: GoodsItem[]; config: SiteConfig; categories?: CategoryItem[] }) => {
+  const handleImportData = (data: { goods: GoodsItem[]; config: SiteConfig; categories?: CategoryItem[]; news?: NewsItem[] }) => {
     if (data.goods && Array.isArray(data.goods)) {
       setGoods(data.goods.map(normalizeGoods));
     }
     if (data.categories && Array.isArray(data.categories)) {
       setCategories(data.categories);
     }
+    if (Array.isArray(data.news)) setNews(data.news);
     if (data.config) {
       setConfig((prev) => ({ ...prev, ...data.config }));
     }
@@ -729,11 +615,13 @@ export default function App() {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onOpenAdmin={() => {
+          if (!archive.state.ready) { showToast('공용 저장소 연결을 확인한 뒤 수정해주세요.', 'info'); return; }
           setAdminInitialTab('crud');
           setIsAdminOpen(true);
         }}
         onOpenLogin={handleOpenLogin}
         currentUser={currentUser}
+        sharedReady={archive.state.ready}
         onLogout={handleLogout}
         isDarkMode={isDarkMode}
         onToggleDarkMode={handleToggleDarkMode}
@@ -743,6 +631,7 @@ export default function App() {
         onOpenAboutModal={() => setIsAboutModalOpen(true)}
         onOpenCalculator={() => setIsCalculatorOpen(true)}
         onOpenTextEdit={() => {
+          if (!archive.state.ready) { showToast('공용 저장소 연결을 확인한 뒤 수정해주세요.', 'info'); return; }
           setAdminInitialTab('textEdit');
           setIsAdminOpen(true);
         }}
@@ -752,6 +641,10 @@ export default function App() {
         onUpdateNewsList={setNews}
         onShowToast={showToast}
       />
+
+      <ArchiveSyncStatus state={archive.state} isAdmin={currentUser?.role === 'admin'}
+        onRetry={() => { if (archive.state.dirty) void archive.save(); else void archive.refresh(); }}
+        onPublish={archive.publishInitial} onRefresh={() => void archive.refresh()} onReload={() => void archive.refresh(true)} />
 
       <GoodsCalculatorModal isOpen={isCalculatorOpen} onClose={() => setIsCalculatorOpen(false)} goods={goods} kindOptions={kindOptions} />
 
@@ -776,7 +669,7 @@ export default function App() {
           onResetFilters={handleResetFilters}
           hasActiveFilters={hasActiveFilters}
           onManageCategories={handleOpenCategoryManager}
-          isAdmin={currentUser?.role === 'admin'}
+          isAdmin={isAdmin}
         />
 
         {/* Active Tag Filter Pill Indicator */}
@@ -857,7 +750,7 @@ export default function App() {
                 onToggleFavorite={handleToggleFavorite}
                 onSelectTag={handleSelectTag}
                 isFavorited={favorites.includes(item.id)}
-                isAdmin={currentUser?.role === 'admin'}
+                isAdmin={isAdmin}
                 onEditGoods={handleAdminEditGoods}
               />
             ))}
@@ -885,7 +778,7 @@ export default function App() {
               </button>
               <button
                 onClick={() => {
-                  if (currentUser?.role === 'admin') {
+                  if (isAdmin) {
                     setAdminInitialTab('crud');
                     setIsAdminOpen(true);
                   } else {
@@ -937,7 +830,7 @@ export default function App() {
                 <span className="text-[10px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded">
                   FAN ARCHIVE
                 </span>
-                {currentUser?.role === 'admin' && (
+                {isAdmin && (
                   <span className="text-[10px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 px-1.5 py-0.5 rounded flex items-center gap-1">
                     <Crown className="w-2.5 h-2.5" />
                     <span>ADMIN</span>
@@ -977,7 +870,7 @@ export default function App() {
               >
                 <span>📦 소스코드 ZIP 다운로드</span>
               </a>
-              {currentUser?.role === 'admin' && (
+              {isAdmin && (
                 <button
                   onClick={() => {
                     setAdminInitialTab('textEdit');
@@ -991,7 +884,7 @@ export default function App() {
               )}
               <button
                 onClick={() => {
-                  if (currentUser?.role === 'admin') {
+                  if (isAdmin) {
                     setAdminInitialTab('crud');
                     setIsAdminOpen(true);
                   } else {
@@ -1000,7 +893,7 @@ export default function App() {
                 }}
                 className="px-3 py-1.5 rounded-lg bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 transition-colors font-semibold text-xs flex items-center gap-1"
               >
-                {currentUser?.role === 'admin' ? (
+                {isAdmin ? (
                   <>
                     <Crown className="w-3 h-3 text-amber-500" />
                     <span>관리자 CMS 열기</span>
@@ -1047,7 +940,7 @@ export default function App() {
           onSelectTag={handleSelectTag}
           onShowToast={showToast}
           isDarkMode={isDarkMode}
-          isAdmin={currentUser?.role === 'admin'}
+          isAdmin={isAdmin}
           onEditGoods={handleAdminEditGoods}
         />
       )}
@@ -1065,6 +958,7 @@ export default function App() {
         onDeleteGoods={handleDeleteGoods}
         onResetToDefault={handleResetToDefault}
         categories={categories}
+        news={news}
         onAddCategory={handleAddCategory}
         onUpdateCategory={handleUpdateCategory}
         onDeleteCategory={handleDeleteCategory}
@@ -1100,7 +994,7 @@ export default function App() {
           setSearchQuery('');
         }}
         isDarkMode={isDarkMode}
-        isAdmin={currentUser?.role === 'admin'}
+        isAdmin={isAdmin}
         onOpenLogin={() => handleOpenLogin(true)}
         config={config}
         onUpdateConfig={(updates) => setConfig((prev) => ({ ...prev, ...updates }))}

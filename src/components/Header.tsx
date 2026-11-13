@@ -35,6 +35,7 @@ interface HeaderProps {
   onOpenAdmin: () => void;
   onOpenLogin: (defaultAdminTab?: boolean) => void;
   currentUser: User | null;
+  sharedReady?: boolean;
   onLogout: () => void;
   isDarkMode: boolean;
   onToggleDarkMode: () => void;
@@ -62,6 +63,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAdmin,
   onOpenLogin,
   currentUser,
+  sharedReady = true,
   onLogout,
   isDarkMode,
   onToggleDarkMode,
@@ -410,7 +412,7 @@ export const Header: React.FC<HeaderProps> = ({
           <NewsBanner
             newsList={newsList}
             onUpdateNewsList={onUpdateNewsList || (() => {})}
-            isAdmin={isAdmin}
+            isAdmin={isAdmin && sharedReady}
             onOpenLogin={() => onOpenLogin(true)}
             onShowToast={onShowToast || (() => {})}
             isDarkMode={isDarkMode}

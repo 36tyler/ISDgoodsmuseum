@@ -572,13 +572,13 @@ export const GoodsDetailModal: React.FC<GoodsDetailModalProps> = ({
                     <Tag className="w-3.5 h-3.5 text-[color:var(--detail-ink)]" />
                     <span>굿즈 태그 목록 ({goods.tags?.length || 0})</span>
                   </span>
-                  <button
+                  {isAdmin && <button
                     onClick={() => setIsEditingTags(!isEditingTags)}
                     className="text-xs text-[color:var(--detail-ink)] hover:underline flex items-center gap-1 font-semibold"
                   >
                     <Edit2 className="w-3 h-3" />
                     <span>{isEditingTags ? '태그 편집 완료' : '태그 추가 / 수정'}</span>
-                  </button>
+                  </button>}
                 </div>
 
                 {/* Display Current Tags (Click to search / filter) */}

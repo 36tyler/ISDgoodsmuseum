@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { isNewsImageUrl } from '../utils/newsUrls';
+import React, { useState, useEffect } from 'react';
 import {
   Megaphone,
   ExternalLink,
@@ -41,6 +42,9 @@ export const NewsBanner: React.FC<NewsBannerProps> = ({
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<NewsItem | null>(null);
   const [showAllNews, setShowAllNews] = useState(false);
+  useEffect(() => {
+    setSelectedDetailNews(previous => previous ? newsList.find(item => item.id === previous.id) || null : null);
+  }, [newsList]);
 
   // Form states for adding / editing news
   const [formTitle, setFormTitle] = useState('');
@@ -85,7 +89,7 @@ export const NewsBanner: React.FC<NewsBannerProps> = ({
 
     const imageUrls = formImages.map(url => url.trim()).filter(Boolean);
     const links = formLinks.filter(link => link.url.trim()).map(link => ({ url: link.url.trim(), label: link.label.trim() }));
-    if ([...imageUrls.filter(url => !url.startsWith('data:image/')), ...links.map(link => link.url)].some(url => !/^https?:\/\//i.test(url))) {
+    if (imageUrls.some(url => !isNewsImageUrl(url)) || links.some(link => !/^https?:\/\//i.test(link.url))) {
       onShowToast('이미지와 링크 주소는 http:// 또는 https://로 입력해주세요.', 'info');
       return;
     }

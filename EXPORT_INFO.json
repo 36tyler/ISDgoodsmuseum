@@ -1,0 +1,7 @@
+{
+  "export_date": "2026-11-13",
+  "version": "shared-v1",
+  "target": "Vercel + Supabase",
+  "database_connected": false,
+  "setup": "SETUP_SHARED_DATA.md"
+}

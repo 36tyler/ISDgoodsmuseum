@@ -19,7 +19,7 @@ async function token(env) {
  const signature=await crypto.subtle.sign('HMAC',await signingKey(env),encoder.encode(payload));
  return payload+'.'+base64url(signature);
 }
-async function authenticated(request,env) {
+export async function authenticated(request,env) {
  try {
   const raw=request.headers.get('Cookie')?.split(';').map(x=>x.trim()).find(x=>x.startsWith(COOKIE+'='))?.slice(COOKIE.length+1);
   if(!raw||raw.length>1024)return false;

@@ -9,8 +9,7 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "build:vercel": "npm run build",
-    "build:cloudflare": "node scripts/clean-dist.mjs && vite build --outDir dist/client && node scripts/build-worker.mjs"
+    "build:vercel": "npm run build"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
