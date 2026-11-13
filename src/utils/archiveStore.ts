@@ -14,7 +14,7 @@ export class ArchiveStore {
  private generation=0;
  private loading=false;
  private lastCheck=0;
- constructor(initial:SharedCatalog,private storage:StorageLike,private transport:typeof fetch=fetch) {
+ constructor(initial:SharedCatalog,private transport:typeof fetch=(input, init) => globalThis.fetch(input, init)) {
   let data=sanitizeCatalog(initial) as SharedCatalog,personal:PersonalCollection={},revision=0,initialized=false,storageError='';
   const read=(key:string)=>{try{const raw=storage.getItem(key);return raw?JSON.parse(raw):null;}catch{return null;}};
   const saved=read(SHARED_CACHE_KEY);
